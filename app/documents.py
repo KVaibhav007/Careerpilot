@@ -10,6 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import A4
 
 async def tailor(profile,job):
+    if not job.get('description','').strip(): raise ValueError('The job description is missing. Paste and save the full JD first.')
     facts=profile.get('facts',[])
     if not facts or not profile.get('name'): raise ValueError('Add a verified profile before generating documents')
     if profile['name'].strip().lower()=='your name' or any(f['text'].startswith('Replace with') for f in facts):
@@ -36,7 +37,7 @@ async def tailor(profile,job):
     sections=list(dict.fromkeys(f.get('section','Experience') for f in chosen))
     for section in sections:
         cv.append(section.upper());cv.extend(f['text'] for f in chosen if f.get('section','Experience')==section)
-    proof='\n\n'.join(f['text'] for f in chosen if f.get('section','Experience')=='Experience')[:6000]
+    proof='\n\n'.join(f['text'] for f in chosen if f.get('section','Experience') in ('Experience','Background'))[:6000]
     cover=f"Dear Hiring Team,\n\nI am applying for the {job['title']} position at {job['company']}. My background includes {', '.join(matched) if matched else profile.get('headline','the experience outlined in my CV')}.\n\nThe following experience is relevant to this application:\n\n{proof}\n\nI would welcome the opportunity to discuss how my experience could support your team. I am based in India and would require employer-supported work authorisation for relocation.\n\nKind regards,\n{profile['name']}"
     return {'cv':'\n\n'.join(x for x in cv if x),'cover_letter':cover,'fact_ids':selected,'mode':mode,'review_required':True,'note':'Facts are preserved verbatim; documents must be reviewed before use.'}
 

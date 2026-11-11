@@ -98,6 +98,19 @@ async def stage(jid:str,request:Request):
     with db() as c:c.execute('UPDATE jobs SET stage=? WHERE id=?',(value,jid))
     return {'stage':value}
 
+@app.put('/api/jobs/{jid}/description')
+async def update_description(jid:str,request:Request):
+    job=getjob(jid)
+    description=(await request.json()).get('description','')
+    if not isinstance(description,str) or not description.strip():
+        raise HTTPException(400,'Paste the full job description before saving')
+    job['description']=description.strip()
+    assessment=assess(job,load('profile.json','profile.example.json'))
+    with db() as c:
+        c.execute('UPDATE jobs SET payload=?,assessment=? WHERE id=?',(json.dumps(job),json.dumps(assessment),jid))
+        c.execute('DELETE FROM documents WHERE job_id=?',(jid,))
+    return {'saved':True}
+
 @app.post('/api/jobs/{jid}/verify')
 async def verify(jid:str):
     j=getjob(jid)

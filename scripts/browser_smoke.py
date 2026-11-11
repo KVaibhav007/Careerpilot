@@ -26,13 +26,6 @@ try:
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto('http://127.0.0.1:8123')
-        page.get_by_role('button', name='Verified profile & sources').click()
-        profile = {'name': 'Test Candidate', 'email': 'test@example.com', 'headline': 'Cloud Security Engineer',
-                   'years_experience': 6, 'skills': ['Cloud Security', 'DevSecOps'],
-                   'facts': [{'id': 'e1', 'section': 'Experience', 'text': 'Delivered verified cloud security improvements.'},
-                             {'id': 'd1', 'section': 'Education', 'text': 'MSc Cybersecurity'}]}
-        page.locator('#profile').fill(json.dumps(profile))
-        page.get_by_role('button', name='Save', exact=True).click()
         page.get_by_role('button', name='Import any JD').click()
         for selector, value in {'#title': 'Cloud Security Engineer', '#company': 'Test Employer', '#location': 'Germany',
                                 '#url': 'https://example.com/job', '#jd': 'Cloud Security and DevSecOps. Visa sponsorship available.'}.items():
@@ -40,6 +33,19 @@ try:
         page.get_by_role('button', name='Add job', exact=True).click()
         page.locator('#list article').first.click()
         page.get_by_role('button', name='Prepare CV + cover letter').click()
+        page.get_by_role('alert').filter(has_text='Replace the example profile').wait_for()
+        page.get_by_role('button', name='Set up or correct CV profile').click()
+        page.locator('#cv-name').fill('Test Candidate')
+        page.locator('#cv-email').fill('test@example.com')
+        page.locator('#cv-text').fill('Delivered verified cloud security improvements.\n\nMSc Cybersecurity')
+        page.get_by_role('button', name='Save CV profile', exact=True).click()
+        page.locator('#job-description').wait_for()
+        assert 'Visa sponsorship available' in page.locator('#job-description').input_value()
+        page.locator('#job-description').fill('Cloud Security and DevSecOps. We provide visa sponsorship. Updated JD.')
+        page.get_by_role('button', name='Save job description', exact=True).click()
+        page.locator('#jd-status').filter(has_text='Saved.').wait_for()
+        page.get_by_role('button', name='Prepare CV + cover letter').click()
+
         page.get_by_role('heading', name='Review your application package').wait_for()
         for name in ['Download CV PDF', 'Download letter PDF']:
             with page.expect_download() as event:

@@ -77,4 +77,15 @@ class PlaceholderTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await tailor(profile,{'title':'Security','company':'Fixture','description':'Cloud security'})
 
+class JobDescriptionTests(unittest.TestCase):
+    def test_edit_jd_updates_sponsorship(self):
+        with TestClient(app) as c:
+            h={'X-CareerPilot-Token':TOKEN}
+            job={'title':'Security Engineer','company':'Fixture','location':'Germany','apply_url':'https://example.com/edit-jd','description':'Security role'}
+            jid=c.post('/api/jobs',headers=h,json=job).json()['id']
+            self.assertEqual(c.put(f'/api/jobs/{jid}/description',headers=h,json={'description':''}).status_code,400)
+            self.assertEqual(c.put(f'/api/jobs/{jid}/description',headers=h,json={'description':'We provide visa sponsorship.'}).status_code,200)
+            updated=next(j for j in c.get('/api/jobs').json() if j['id']==jid)
+            self.assertEqual(updated['assessment']['sponsorship']['status'],'explicitly offered')
+
 if __name__=='__main__':unittest.main()
