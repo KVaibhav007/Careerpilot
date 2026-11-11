@@ -57,6 +57,10 @@ async def save_settings(request:Request):
     data=await request.json();profile=data['profile'];facts=profile.get('facts',[])
     if len({f['id'] for f in facts})!=len(facts):raise HTTPException(400,'Fact IDs must be unique')
     for key in ('profile','sources'):(DATA/(key+'.json')).write_text(json.dumps(data[key],indent=2))
+    with db() as c:
+        for row in c.execute('SELECT id,payload FROM jobs').fetchall():
+            c.execute('UPDATE jobs SET assessment=? WHERE id=?', (json.dumps(assess(json.loads(row['payload']),profile)),row['id']))
+        c.execute('DELETE FROM documents')
     return {'saved':True}
 
 @app.post('/api/scan')

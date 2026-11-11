@@ -36,7 +36,6 @@ class DocumentTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(p['facts'][0]['text'],d['cv']);self.assertNotIn('Kubernetes',d['cv'])
         self.assertEqual(d['fact_ids'],['a'])
 
-if __name__=='__main__':unittest.main()
 
 class ConnectorTests(unittest.IsolatedAsyncioTestCase):
     async def test_board_mapping(self):
@@ -48,3 +47,34 @@ class ConnectorTests(unittest.IsolatedAsyncioTestCase):
             rows=await board(client,{'type':'greenhouse','slug':'fixture'})
         self.assertEqual(rows[0]['apply_url'],'https://example.com/123')
         self.assertIn('Visa sponsorship',rows[0]['description'])
+
+class FullWorkflowTests(unittest.TestCase):
+    def test_documents_contacts_and_profile_refresh(self):
+        with TestClient(app) as c:
+            h={'X-CareerPilot-Token':TOKEN}
+            settings=c.get('/api/settings').json()
+            settings['profile']={'name':'Test Candidate','skills':['Cloud Security'],'years_experience':6,'facts':[{'id':'verified','section':'Experience','text':'Delivered a verified cloud security project.'}]}
+            self.assertEqual(c.put('/api/settings',headers=h,json=settings).status_code,200)
+            job={'title':'Cloud Security Engineer','company':'Fixture','location':'Germany','apply_url':'https://example.com/workflow','description':'Cloud Security. Visa sponsorship available.'}
+            jid=c.post('/api/jobs',headers=h,json=job).json()['id']
+            result=c.post(f'/api/jobs/{jid}/documents',headers=h)
+            self.assertEqual(result.status_code,200)
+            for kind in ('cv','cover_letter'):
+                pdf=c.get(f'/api/jobs/{jid}/documents/{kind}.pdf')
+                self.assertEqual(pdf.status_code,200);self.assertTrue(pdf.content.startswith(b'%PDF'))
+            self.assertEqual(c.post(f'/api/jobs/{jid}/contacts',headers=h,json={'name':'Fixture Recruiter','source_url':'https://example.com/team'}).status_code,200)
+            settings['profile']['skills']=['Unrelated skill']
+            c.put('/api/settings',headers=h,json=settings)
+            updated=next(j for j in c.get('/api/jobs').json() if j['id']==jid)
+            self.assertEqual(updated['assessment']['fit_score'],0)
+            self.assertEqual(c.get(f'/api/jobs/{jid}/documents/cv.pdf').status_code,404)
+
+class PlaceholderTests(unittest.IsolatedAsyncioTestCase):
+    async def test_example_profile_is_rejected(self):
+        import json
+        from pathlib import Path
+        profile=json.loads(Path('profile.example.json').read_text())
+        with self.assertRaises(ValueError):
+            await tailor(profile,{'title':'Security','company':'Fixture','description':'Cloud security'})
+
+if __name__=='__main__':unittest.main()

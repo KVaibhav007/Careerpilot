@@ -12,6 +12,8 @@ from reportlab.lib.pagesizes import A4
 async def tailor(profile,job):
     facts=profile.get('facts',[])
     if not facts or not profile.get('name'): raise ValueError('Add a verified profile before generating documents')
+    if profile['name'].strip().lower()=='your name' or any(f['text'].startswith('Replace with') for f in facts):
+        raise ValueError('Replace the example profile with verified facts before generating documents')
     words=set(re.findall(r'[a-z]{3,}',job['description'].lower()))
     ranked=sorted(facts,key=lambda f:len(words & set(re.findall(r'[a-z]{3,}',f['text'].lower()))),reverse=True)
     selected=[f['id'] for f in ranked]
