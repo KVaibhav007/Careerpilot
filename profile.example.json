@@ -1,0 +1,12 @@
+{
+  "name": "Your name",
+  "email": "you@example.com",
+  "headline": "Cybersecurity and Technical Project Management",
+  "summary": "Replace with a verified professional summary.",
+  "years_experience": 6,
+  "skills": ["Cloud Security", "DevSecOps", "Project Management"],
+  "facts": [
+    {"id": "exp1", "section": "Experience", "text": "Replace with a verified role, employer, dates and achievement."},
+    {"id": "edu1", "section": "Education", "text": "Replace with your verified degree and university."}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "boards": [
+    {"type": "greenhouse", "slug": "gitlab"},
+    {"type": "lever", "slug": "spotify"},
+    {"type": "ashby", "slug": "notion"}
+  ],
+  "remoteok": false,
+  "wwr": false,
+  "jobspy": {"enabled": false, "countries": ["Germany", "Netherlands", "Japan", "Singapore", "USA"], "sites": ["indeed"], "results_per_query": 15}
+}
