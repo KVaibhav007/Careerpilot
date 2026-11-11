@@ -45,7 +45,7 @@ try:
             with page.expect_download() as event:
                 page.get_by_role('link', name=name).click()
             with open(event.value.path(), 'rb') as document:
-                assert document.read(5) == b'%PDF'
+                assert document.read(5) == b'%PDF-'
             print('PASS:', name)
         assert not errors, errors
         browser.close()
